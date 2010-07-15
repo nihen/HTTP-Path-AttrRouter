@@ -1,9 +1,80 @@
 package HTTP::Path::AttrRouter;
-use strict;
-use warnings;
+use Any::Moose;
+
 our $VERSION = '0.01';
 
-1;
+extends 'Path::AttrRouter';
+
++has action_class => (
+    is      => 'rw',
+    isa     => 'Str',
+    default => 'HTTP::Path::AttrRouter::Action',
+);
+
++has dispatch_types => (
+    is      => 'rw',
+    isa     => 'ArrayRef',
+    lazy    => 1,
+    default => sub {
+        my $self = shift;
+
+        my @types;
+        for (qw/Path Regex Chained/) {
+            my $class = "HTTP::Path::AttrRouter::DispatchType::$_";
+            $self->_ensure_class_loaded($class);
+            push @types, $class->new;
+        }
+
+        \@types;
+    },
+);
+
+
+around match => sub {
+    my ($orig, $self, $path, $method) = @_;
+
+    my @path = split m!/!, $path;
+    unshift @path, '' unless @path;
+
+    $method = uc $method if $method;
+
+    my ($action, @args, @captures);
+ DESCEND:
+    while (@path) {
+        my $p = join '/', @path;
+        $p =~ s!^/!!;
+
+        for my $type (@{ $self->dispatch_types }) {
+            $action = $type->match($p, $method, \@args, \@captures, $self->action_class);
+            last DESCEND if $action;
+        }
+
+        my $arg = pop @path;
+        $arg =~ s/%([0-9A-Fa-f]{2})/chr(hex($1))/eg;
+        unshift @args, $arg;
+    }
+
+    s/%([0-9A-Fa-f]{2})/chr(hex($1))/eg
+        for grep {defined} @captures;
+
+    if ($action) {
+        # recreate controller instance if it is cached object
+        unless (ref $action->controller) {
+            $action->controller($self->_load_module($action->controller));
+        }
+
+        return Path::AttrRouter::Match->new(
+            action   => $action,
+            args     => \@args,
+            captures => \@captures,
+            router   => $self,
+        );
+    }
+    return;
+};
+
+no Any::Moose;
+__PACKAGE__->meta->make_immutable;
 __END__
 
 =head1 NAME
