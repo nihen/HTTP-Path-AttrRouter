@@ -15,44 +15,7 @@ extends 'Path::AttrRouter';
 around match => sub {
     my ($orig, $self, $path, $method) = @_;
 
-    my @path = split m!/!, $path;
-    unshift @path, '' unless @path;
-
-    $method = uc $method if $method;
-
-    my ($action, @args, @captures);
- DESCEND:
-    while (@path) {
-        my $p = join '/', @path;
-        $p =~ s!^/!!;
-
-        for my $type (@{ $self->dispatch_types }) {
-            $action = $type->match({path => $p, method => $method, args => \@args, captures => \@captures, action_class => $self->action_class});
-            last DESCEND if $action;
-        }
-
-        my $arg = pop @path;
-        $arg =~ s/%([0-9A-Fa-f]{2})/chr(hex($1))/eg;
-        unshift @args, $arg;
-    }
-
-    s/%([0-9A-Fa-f]{2})/chr(hex($1))/eg
-        for grep {defined} @captures;
-
-    if ($action) {
-        # recreate controller instance if it is cached object
-        unless (ref $action->controller) {
-            $action->controller($self->_load_module($action->controller));
-        }
-
-        return Path::AttrRouter::Match->new(
-            action   => $action,
-            args     => \@args,
-            captures => \@captures,
-            router   => $self,
-        );
-    }
-    return;
+    return $self->$orig($path, {method => $method});
 };
 
 no Any::Moose;
