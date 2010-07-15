@@ -1,0 +1,22 @@
+# NAME
+
+HTTP::Path::AttrRouter -
+
+# SYNOPSIS
+
+  use HTTP::Path::AttrRouter;
+
+# DESCRIPTION
+
+HTTP::Path::AttrRouter is
+
+# AUTHOR
+
+Masahiro Chiba <chiba@everqueue.com>
+
+# SEE ALSO
+
+# LICENSE
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
