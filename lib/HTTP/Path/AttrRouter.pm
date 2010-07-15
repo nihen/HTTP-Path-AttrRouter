@@ -12,6 +12,25 @@ extends 'Path::AttrRouter';
 );
 
 
++has dispatch_types => (
+    is      => 'rw',
+    isa     => 'ArrayRef',
+    lazy    => 1,
+    default => sub {
+        my $self = shift;
+
+        my @types;
+        for (qw/Path Regex Chained/) {
+            my $class = "HTTP::Path::AttrRouter::DispatchType::$_";
+            $self->_ensure_class_loaded($class);
+            push @types, $class->new;
+        }
+
+        \@types;
+    },
+);
+
+
 around match => sub {
     my ($orig, $self, $path, $method) = @_;
 
