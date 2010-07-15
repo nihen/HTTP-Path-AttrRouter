@@ -11,24 +11,6 @@ extends 'Path::AttrRouter';
     default => 'HTTP::Path::AttrRouter::Action',
 );
 
-+has dispatch_types => (
-    is      => 'rw',
-    isa     => 'ArrayRef',
-    lazy    => 1,
-    default => sub {
-        my $self = shift;
-
-        my @types;
-        for (qw/Path Regex Chained/) {
-            my $class = "HTTP::Path::AttrRouter::DispatchType::$_";
-            $self->_ensure_class_loaded($class);
-            push @types, $class->new;
-        }
-
-        \@types;
-    },
-);
-
 
 around match => sub {
     my ($orig, $self, $path, $method) = @_;
@@ -45,7 +27,7 @@ around match => sub {
         $p =~ s!^/!!;
 
         for my $type (@{ $self->dispatch_types }) {
-            $action = $type->match($p, $method, \@args, \@captures, $self->action_class);
+            $action = $type->match({path => $p, method => $method, args => \@args, captures => \@captures, action_class => $self->action_class});
             last DESCEND if $action;
         }
 

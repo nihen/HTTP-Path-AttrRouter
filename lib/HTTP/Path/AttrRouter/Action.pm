@@ -5,6 +5,15 @@ our $VERSION = '0.01';
 
 extends 'Path::AttrRouter::Action';
 
+around match => sub {
+    my ($orig, $self, $condition) = @_;
+
+    return 0 unless $self->$orig($condition);
+    return 0 unless $self->match_method($condition->{method});
+
+    return 1;
+};
+
 no Any::Moose;
 
 sub match_method {
