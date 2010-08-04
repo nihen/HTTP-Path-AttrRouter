@@ -5,17 +5,11 @@ our $VERSION = '0.01';
 
 extends 'Path::AttrRouter';
 
-+has action_class => (
-    is      => 'rw',
-    isa     => 'Str',
+has '+action_class' => (
     default => 'HTTP::Path::AttrRouter::Action',
 );
 
-
-+has dispatch_types => (
-    is      => 'rw',
-    isa     => 'ArrayRef',
-    lazy    => 1,
+has '+dispatch_types' => (
     default => sub {
         my $self = shift;
 
